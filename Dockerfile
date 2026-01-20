@@ -27,11 +27,6 @@ COPY --from=frontend-builder /app/frontend/dist ./public
 # Create data directory
 RUN mkdir -p data
 
-# Add static file serving to backend
-RUN echo "app.use(express.static('public'));" >> server.js.tmp && \
-    cat server.js >> server.js.tmp && \
-    mv server.js.tmp server.js
-
 # Environment
 ENV NODE_ENV=production
 ENV PORT=3000
@@ -42,4 +37,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
 
-CMD ["node", "server.js"]
+CMD ["node", "server.production.js"]
