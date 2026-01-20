@@ -5,7 +5,7 @@ builder = "nixpacks"
 installCmd = "cd frontend && npm install && npm run build && cd ../backend && npm install && cp -r ../frontend/dist ./public"
 
 [deploy]
-startCommand = "cd backend && node server.production.js"
+startCommand = "node backend/server.production.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"
