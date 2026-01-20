@@ -143,7 +143,7 @@ function LoginScreen() {
       <div className="w-full max-w-md animate-bounce-in">
         {/* Logo Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 border border-white/10 mb-4 glow">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-brand-50 border border-brand-100 mb-4 glow shadow-sm">
             <img src={bellaLogo} alt="IDF EXPO 2026 logo" className="w-14 h-14 object-contain" />
           </div>
           <h1 className="font-display text-3xl font-bold gradient-text">IDF EXPO 2026</h1>
@@ -160,7 +160,7 @@ function LoginScreen() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-dark-900/50 border border-dark-700 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                className="w-full bg-white/70 border border-dark-700 rounded-xl py-3.5 pl-12 pr-4 text-dark-900 placeholder-dark-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                 placeholder="Enter username"
                 autoComplete="username"
               />
@@ -175,7 +175,7 @@ function LoginScreen() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-dark-900/50 border border-dark-700 rounded-xl py-3.5 pl-12 pr-12 text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                className="w-full bg-white/70 border border-dark-700 rounded-xl py-3.5 pl-12 pr-12 text-dark-900 placeholder-dark-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                 placeholder="Enter password"
                 autoComplete="current-password"
               />
@@ -295,7 +295,7 @@ function EntryForm() {
       {/* Header */}
       <header className="glass sticky top-0 z-10 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center shadow-sm">
             <img src={bellaLogo} alt="IDF EXPO 2026 logo" className="w-8 h-8 object-contain" />
           </div>
           <div>
@@ -320,7 +320,7 @@ function EntryForm() {
           </div>
           <div className="glass rounded-xl p-4">
             <p className="text-dark-400 text-sm">Total</p>
-            <p className="font-display text-2xl font-bold text-white">{stats.total}</p>
+            <p className="font-display text-2xl font-bold text-dark-900">{stats.total}</p>
           </div>
         </div>
 
@@ -339,7 +339,7 @@ function EntryForm() {
                 type="text"
                 value={formData.customer_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, customer_name: e.target.value }))}
-                className="w-full bg-dark-900/50 border border-dark-700 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                className="w-full bg-white/70 border border-dark-700 rounded-xl py-3.5 pl-12 pr-4 text-dark-900 placeholder-dark-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                 placeholder="Enter customer name"
               />
             </div>
@@ -353,7 +353,7 @@ function EntryForm() {
                 type="tel"
                 value={formData.mobile_number}
                 onChange={(e) => setFormData(prev => ({ ...prev, mobile_number: e.target.value }))}
-                className="w-full bg-dark-900/50 border border-dark-700 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-dark-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                className="w-full bg-white/70 border border-dark-700 rounded-xl py-3.5 pl-12 pr-4 text-dark-900 placeholder-dark-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
                 placeholder="10-digit mobile number"
                 inputMode="tel"
               />
@@ -367,7 +367,7 @@ function EntryForm() {
               <select
                 value={formData.branch}
                 onChange={(e) => setFormData(prev => ({ ...prev, branch: e.target.value }))}
-                className="w-full bg-dark-900/50 border border-dark-700 rounded-xl py-3.5 pl-12 pr-4 text-white appearance-none focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                className="w-full bg-white/70 border border-dark-700 rounded-xl py-3.5 pl-12 pr-4 text-dark-900 appearance-none focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
               >
                 {branches.map(branch => (
                   <option key={branch} value={branch}>{branch}</option>
@@ -398,13 +398,13 @@ function EntryForm() {
 
         {/* Last Coupon Success */}
         {lastCoupon && (
-          <div className="glass rounded-2xl p-5 animate-slide-up border border-green-500/20 bg-green-500/5">
+          <div className="glass rounded-2xl p-5 animate-slide-up border border-green-200/80 bg-green-50/80">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                <Check className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <Check className="w-5 h-5 text-green-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-green-400">Coupon Created!</p>
+                <p className="font-semibold text-green-700">Coupon Created!</p>
                 <p className="text-sm text-dark-300 mt-1">{lastCoupon.customer_name}</p>
                 <p className="text-sm text-dark-400">{lastCoupon.mobile_number}</p>
                 <div className="mt-2 px-3 py-2 bg-dark-900/50 rounded-lg">
@@ -412,7 +412,7 @@ function EntryForm() {
                   <p className="font-mono font-bold text-brand-400">{lastCoupon.coupon_code}</p>
                 </div>
                 {!lastCoupon.whatsapp_sent && (
-                  <p className="text-xs text-yellow-500 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-amber-700 mt-2 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" />
                     WhatsApp delivery pending
                   </p>
@@ -553,7 +553,7 @@ function AdminDashboard() {
       <aside className={`fixed inset-y-0 left-0 w-64 glass z-50 transform transition-transform duration-300 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-4 border-b border-dark-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center shadow-sm">
               <img src={bellaLogo} alt="IDF EXPO 2026 logo" className="w-8 h-8 object-contain" />
             </div>
             <div>
@@ -615,15 +615,15 @@ function AdminDashboard() {
                 </div>
                 <div className="glass rounded-xl p-5">
                   <p className="text-dark-400 text-sm">WhatsApp Sent</p>
-                  <p className="font-display text-3xl font-bold text-green-400 mt-1">{stats.whatsappSent}</p>
+                  <p className="font-display text-3xl font-bold text-emerald-700 mt-1">{stats.whatsappSent}</p>
                 </div>
                 <div className="glass rounded-xl p-5">
                   <p className="text-dark-400 text-sm">Pending</p>
-                  <p className="font-display text-3xl font-bold text-yellow-400 mt-1">{stats.whatsappFailed}</p>
+                  <p className="font-display text-3xl font-bold text-amber-700 mt-1">{stats.whatsappFailed}</p>
                 </div>
                 <div className="glass rounded-xl p-5">
                   <p className="text-dark-400 text-sm">Staff Active</p>
-                  <p className="font-display text-3xl font-bold text-blue-400 mt-1">{stats.byStaff?.length || 0}</p>
+                  <p className="font-display text-3xl font-bold text-sky-700 mt-1">{stats.byStaff?.length || 0}</p>
                 </div>
               </div>
 
@@ -684,13 +684,13 @@ function AdminDashboard() {
                     value={filters.search}
                     onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                     placeholder="Search name, mobile, code..."
-                    className="w-full bg-dark-900/50 border border-dark-700 rounded-lg py-2.5 pl-10 pr-4 text-white placeholder-dark-500 focus:outline-none focus:border-brand-500"
+                    className="w-full bg-white/70 border border-dark-700 rounded-lg py-2.5 pl-10 pr-4 text-dark-900 placeholder-dark-500 focus:outline-none focus:border-brand-500"
                   />
                 </div>
                 <select
                   value={filters.branch}
                   onChange={(e) => setFilters(prev => ({ ...prev, branch: e.target.value }))}
-                  className="bg-dark-900/50 border border-dark-700 rounded-lg py-2.5 px-4 text-white focus:outline-none focus:border-brand-500"
+                  className="bg-white/70 border border-dark-700 rounded-lg py-2.5 px-4 text-dark-900 focus:outline-none focus:border-brand-500"
                 >
                   <option value="">All Branches</option>
                   {branches.map(b => <option key={b} value={b}>{b}</option>)}
@@ -699,7 +699,7 @@ function AdminDashboard() {
                   type="date"
                   value={filters.date}
                   onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
-                  className="bg-dark-900/50 border border-dark-700 rounded-lg py-2.5 px-4 text-white focus:outline-none focus:border-brand-500"
+                  className="bg-white/70 border border-dark-700 rounded-lg py-2.5 px-4 text-dark-900 focus:outline-none focus:border-brand-500"
                 />
               </div>
 
@@ -736,11 +736,11 @@ function AdminDashboard() {
                           <td className="p-4 text-dark-300 hidden lg:table-cell">{coupon.staff_name}</td>
                           <td className="p-4">
                             {coupon.whatsapp_sent ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 rounded-lg text-sm">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-sm">
                                 <Check className="w-3 h-3" /> Sent
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm">
+                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-sm">
                                 <AlertCircle className="w-3 h-3" /> Pending
                               </span>
                             )}
@@ -841,9 +841,9 @@ function StaffManagement({ staff, onRefresh }) {
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  member.role === 'admin' ? 'bg-purple-500/20' : 'bg-blue-500/20'
+                  member.role === 'admin' ? 'bg-brand-100' : 'bg-emerald-100'
                 }`}>
-                  <User className={`w-6 h-6 ${member.role === 'admin' ? 'text-purple-400' : 'text-blue-400'}`} />
+                  <User className={`w-6 h-6 ${member.role === 'admin' ? 'text-brand-700' : 'text-emerald-700'}`} />
                 </div>
                 <div>
                   <p className="font-semibold">{member.name}</p>
@@ -851,14 +851,14 @@ function StaffManagement({ staff, onRefresh }) {
                 </div>
               </div>
               <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
-                member.role === 'admin' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'
+                member.role === 'admin' ? 'bg-brand-100 text-brand-700' : 'bg-emerald-100 text-emerald-700'
               }`}>
                 {member.role}
               </span>
             </div>
             
             <div className="mt-4 pt-4 border-t border-dark-700 flex items-center justify-between">
-              <span className={`text-sm ${member.active ? 'text-green-400' : 'text-red-400'}`}>
+              <span className={`text-sm ${member.active ? 'text-emerald-700' : 'text-red-600'}`}>
                 {member.active ? 'Active' : 'Inactive'}
               </span>
               <button
@@ -866,7 +866,7 @@ function StaffManagement({ staff, onRefresh }) {
                 className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
               >
                 {member.active ? (
-                  <ToggleRight className="w-6 h-6 text-green-400" />
+                  <ToggleRight className="w-6 h-6 text-emerald-600" />
                 ) : (
                   <ToggleLeft className="w-6 h-6 text-dark-500" />
                 )}
@@ -894,7 +894,7 @@ function StaffManagement({ staff, onRefresh }) {
                   type="text"
                   value={newStaff.name}
                   onChange={(e) => setNewStaff(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full mt-1 bg-dark-900/50 border border-dark-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-brand-500"
+                  className="w-full mt-1 bg-white/70 border border-dark-700 rounded-xl py-3 px-4 text-dark-900 focus:outline-none focus:border-brand-500"
                   placeholder="John Doe"
                 />
               </div>
@@ -904,7 +904,7 @@ function StaffManagement({ staff, onRefresh }) {
                   type="text"
                   value={newStaff.username}
                   onChange={(e) => setNewStaff(prev => ({ ...prev, username: e.target.value.toLowerCase() }))}
-                  className="w-full mt-1 bg-dark-900/50 border border-dark-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-brand-500"
+                  className="w-full mt-1 bg-white/70 border border-dark-700 rounded-xl py-3 px-4 text-dark-900 focus:outline-none focus:border-brand-500"
                   placeholder="johndoe"
                 />
               </div>
@@ -914,7 +914,7 @@ function StaffManagement({ staff, onRefresh }) {
                   type="text"
                   value={newStaff.password}
                   onChange={(e) => setNewStaff(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full mt-1 bg-dark-900/50 border border-dark-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-brand-500"
+                  className="w-full mt-1 bg-white/70 border border-dark-700 rounded-xl py-3 px-4 text-dark-900 focus:outline-none focus:border-brand-500"
                   placeholder="Minimum 4 characters"
                 />
               </div>
@@ -923,7 +923,7 @@ function StaffManagement({ staff, onRefresh }) {
                 <select
                   value={newStaff.role}
                   onChange={(e) => setNewStaff(prev => ({ ...prev, role: e.target.value }))}
-                  className="w-full mt-1 bg-dark-900/50 border border-dark-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-brand-500"
+                  className="w-full mt-1 bg-white/70 border border-dark-700 rounded-xl py-3 px-4 text-dark-900 focus:outline-none focus:border-brand-500"
                 >
                   <option value="staff">Staff</option>
                   <option value="admin">Admin</option>
@@ -986,9 +986,10 @@ export default function WrappedApp() {
         toastOptions={{
           className: 'toast-custom',
           style: {
-            background: '#1e1f2e',
-            color: '#f6f6f9',
-            border: '1px solid rgba(99, 103, 147, 0.2)'
+            background: '#fffaf5',
+            color: '#2a241f',
+            border: '1px solid rgba(79, 70, 62, 0.18)',
+            boxShadow: '0 14px 30px rgba(60, 52, 44, 0.12)'
           }
         }}
       />

@@ -10,12 +10,26 @@ html {
   scroll-behavior: smooth;
 }
 
+:root {
+  --paper-1: #fcfaf7;
+  --paper-2: #f7f3ef;
+  --paper-3: #ede7e1;
+  --ink-1: #2a241f;
+  --ink-2: #6b6158;
+  --border-soft: rgba(79, 70, 62, 0.18);
+  --card: rgba(255, 255, 255, 0.78);
+  --card-strong: rgba(255, 255, 255, 0.92);
+}
+
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background: linear-gradient(135deg, #13141f 0%, #1e1f2e 50%, #13141f 100%);
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(237, 85, 69, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 90% 10%, rgba(247, 124, 111, 0.18), transparent 60%),
+    linear-gradient(135deg, var(--paper-1) 0%, var(--paper-2) 55%, var(--paper-3) 100%);
   min-height: 100vh;
   min-height: 100dvh;
-  color: #f6f6f9;
+  color: var(--ink-1);
 }
 
 /* Custom scrollbar */
@@ -25,16 +39,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(30, 31, 46, 0.5);
+  background: rgba(214, 206, 198, 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 103, 147, 0.5);
+  background: rgba(123, 111, 100, 0.4);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 103, 147, 0.8);
+  background: rgba(123, 111, 100, 0.6);
 }
 
 /* Form input styles */
@@ -47,7 +61,7 @@ select {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #f77c6f 0%, #ed5545 50%, #d93c2a 100%);
+  background: linear-gradient(135deg, #d44837 0%, #ed5545 45%, #f59a7f 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -55,22 +69,24 @@ select {
 
 /* Glass effect */
 .glass {
-  background: rgba(30, 31, 46, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(99, 103, 147, 0.2);
+  background: var(--card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 18px 40px rgba(58, 49, 41, 0.08);
 }
 
 /* Glow effect */
 .glow {
-  box-shadow: 0 0 40px rgba(237, 85, 69, 0.15);
+  box-shadow: 0 0 36px rgba(237, 85, 69, 0.2);
 }
 
 /* Pattern background */
 .pattern-bg {
   background-image: 
-    radial-gradient(circle at 25% 25%, rgba(237, 85, 69, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(99, 103, 147, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 20% 20%, rgba(237, 85, 69, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(249, 208, 180, 0.35) 0%, transparent 40%),
+    radial-gradient(circle at 70% 80%, rgba(237, 85, 69, 0.05) 0%, transparent 55%);
 }
 
 /* Toast customization */
