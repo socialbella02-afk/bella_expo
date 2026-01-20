@@ -171,7 +171,7 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
 // Branches
 app.get('/api/branches', authenticateToken, (req, res) => {
   const branches = process.env.BRANCHES?.split(',').map(b => b.trim()) || 
-    ['Calicut', 'Kochi', 'Thrissur', 'Kannur', 'Malappuram'];
+    ['Mabelah', 'Ghobra', 'Barka', 'Nizwa', 'Ibri', 'Sohar', 'Sur', 'Salalah'];
   res.json({ branches });
 });
 

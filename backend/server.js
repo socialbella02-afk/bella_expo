@@ -525,7 +525,7 @@ app.get('/api/branches', authenticateToken, (req, res) => {
   // You can make this configurable via database or environment
   const branches = process.env.BRANCHES 
     ? process.env.BRANCHES.split(',').map(b => b.trim())
-    : ['Calicut', 'Kochi', 'Thrissur', 'Kannur', 'Malappuram'];
+    : ['Mabelah', 'Ghobra', 'Barka', 'Nizwa', 'Ibri', 'Sohar', 'Sur', 'Salalah'];
   res.json({ branches });
 });
 
