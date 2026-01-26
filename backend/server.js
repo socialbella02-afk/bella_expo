@@ -10,6 +10,7 @@ const twilio = require('twilio');
 const XLSX = require('xlsx');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -91,9 +92,343 @@ const JWT_EXPIRES_IN = '24h';
 
 // Twilio setup
 let twilioClient = null;
-if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-  twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const twilioSid = process.env.TWILIO_ACCOUNT_SID;
+const twilioToken = process.env.TWILIO_AUTH_TOKEN;
+if (twilioSid && twilioToken && twilioSid.startsWith('AC')) {
+  twilioClient = twilio(twilioSid, twilioToken);
+  console.log('Twilio client initialized');
+} else {
+  console.log('Twilio not configured - WhatsApp messages will be simulated');
 }
+
+// Odoo Configuration
+const ODOO_URL = process.env.ODOO_URL || 'https://test.bellastore.in';
+const ODOO_DB = process.env.ODOO_DATABASE;
+const ODOO_USERNAME = process.env.ODOO_USERNAME;
+const ODOO_API_KEY = process.env.ODOO_API_KEY;
+let odooUid = null;
+
+// Authenticate with Odoo and get user ID
+async function authenticateOdoo() {
+  if (odooUid) return odooUid;
+
+  if (!ODOO_DB || !ODOO_USERNAME || !ODOO_API_KEY) {
+    throw new Error('Odoo credentials not configured');
+  }
+
+  const response = await axios.post(`${ODOO_URL}/jsonrpc`, {
+    jsonrpc: "2.0",
+    method: "call",
+    params: {
+      service: "common",
+      method: "authenticate",
+      args: [ODOO_DB, ODOO_USERNAME, ODOO_API_KEY, {}]
+    },
+    id: Date.now()
+  });
+
+  if (response.data.error || !response.data.result) {
+    console.error('Odoo auth error:', response.data.error);
+    throw new Error('Odoo authentication failed');
+  }
+  odooUid = response.data.result;
+  console.log('Odoo authenticated, uid:', odooUid);
+  return odooUid;
+}
+
+// Create contact in Odoo
+async function createOdooContact(name, phone, city, branchId = null) {
+  const uid = await authenticateOdoo();
+  const formattedName = `${name.toUpperCase()} ${phone} #IDF2026`;
+
+  const partnerData = {
+    name: formattedName,
+    phone: phone,
+    city: city,
+    is_customer_toggle: true  // Mark as customer in Odoo
+  };
+
+  // Add branch if provided
+  if (branchId) {
+    partnerData.branch_id = branchId;
+  }
+
+  const response = await axios.post(`${ODOO_URL}/jsonrpc`, {
+    jsonrpc: "2.0",
+    method: "call",
+    params: {
+      service: "object",
+      method: "execute_kw",
+      args: [ODOO_DB, uid, ODOO_API_KEY, "res.partner", "create", [partnerData]]
+    },
+    id: Date.now()
+  });
+
+  if (response.data.error) {
+    console.error('Odoo create error:', response.data.error);
+    throw new Error(response.data.error.data?.message || 'Odoo API error');
+  }
+  return response.data.result; // partner_id
+}
+
+// Send WhatsApp via Odoo using template
+async function sendOdooWhatsApp(partnerId, phone) {
+  const uid = await authenticateOdoo();
+  const templateName = process.env.WHATSAPP_TEMPLATE_NAME || 'idf_2026';
+
+  console.log(`\n=== WhatsApp Send Attempt ===`);
+  console.log(`Partner ID: ${partnerId}, Phone: +968${phone}, Template: ${templateName}`);
+
+  try {
+    // Step 1: Find the WhatsApp template by name
+    console.log('Step 1: Looking up template...');
+    const templateResponse = await axios.post(`${ODOO_URL}/jsonrpc`, {
+      jsonrpc: "2.0",
+      method: "call",
+      params: {
+        service: "object",
+        method: "execute_kw",
+        args: [ODOO_DB, uid, ODOO_API_KEY, "whatsapp.template", "search_read",
+          [[["name", "=", templateName]]],
+          { fields: ["id", "name"], limit: 1 }
+        ]
+      },
+      id: Date.now()
+    });
+
+    if (templateResponse.data.error) {
+      console.error('Template lookup error:', JSON.stringify(templateResponse.data.error));
+      throw new Error(templateResponse.data.error.data?.message || 'Failed to find WhatsApp template');
+    }
+
+    const templates = templateResponse.data.result || [];
+    console.log(`Templates found: ${templates.length}`, templates);
+
+    if (templates.length === 0) {
+      throw new Error(`WhatsApp template '${templateName}' not found`);
+    }
+
+    const templateId = templates[0].id;
+    console.log(`Step 1 OK: Found template "${templateName}" (ID: ${templateId})`);
+
+    // Step 2: Create WhatsApp composer with the template
+    console.log('Step 2: Creating WhatsApp composer...');
+    const composerResponse = await axios.post(`${ODOO_URL}/jsonrpc`, {
+      jsonrpc: "2.0",
+      method: "call",
+      params: {
+        service: "object",
+        method: "execute_kw",
+        args: [ODOO_DB, uid, ODOO_API_KEY, "whatsapp.composer", "create", [{
+          res_model: "res.partner",
+          res_ids: [partnerId],
+          phone: `+968${phone}`,
+          wa_template_id: templateId
+        }]]
+      },
+      id: Date.now()
+    });
+
+    if (composerResponse.data.error) {
+      console.error('Composer creation error:', JSON.stringify(composerResponse.data.error));
+      throw new Error(composerResponse.data.error.data?.message || 'Failed to create WhatsApp composer');
+    }
+
+    const composerId = composerResponse.data.result;
+    console.log(`Step 2 OK: Composer created (ID: ${composerId})`);
+
+    // Step 3: Send the WhatsApp message
+    if (composerId) {
+      console.log('Step 3: Sending WhatsApp template...');
+      const sendResponse = await axios.post(`${ODOO_URL}/jsonrpc`, {
+        jsonrpc: "2.0",
+        method: "call",
+        params: {
+          service: "object",
+          method: "execute_kw",
+          args: [ODOO_DB, uid, ODOO_API_KEY, "whatsapp.composer", "action_send_whatsapp_template", [[composerId]]]
+        },
+        id: Date.now()
+      });
+
+      if (sendResponse.data.error) {
+        console.error('Send error:', JSON.stringify(sendResponse.data.error));
+        throw new Error(sendResponse.data.error.data?.message || 'Failed to send WhatsApp');
+      }
+      console.log('Step 3 OK: Send response:', JSON.stringify(sendResponse.data.result));
+    }
+
+    console.log(`✓ WhatsApp sent successfully to partner ${partnerId} (phone: +968${phone})`);
+    return { success: true };
+  } catch (error) {
+    console.error('✗ Odoo WhatsApp error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+// Post a log note to partner's chatter
+async function postOdooChatterNote(partnerId, staffName) {
+  const uid = await authenticateOdoo();
+  const noteBody = `<p>Created by <b>${staffName}</b> #IDF2026</p>`;
+
+  try {
+    const response = await axios.post(`${ODOO_URL}/jsonrpc`, {
+      jsonrpc: "2.0",
+      method: "call",
+      params: {
+        service: "object",
+        method: "execute_kw",
+        args: [
+          ODOO_DB,
+          uid,
+          ODOO_API_KEY,
+          "res.partner",
+          "message_post",
+          [[partnerId]],  // positional args - partner id as list
+          {               // keyword args
+            body: noteBody,
+            message_type: "comment",
+            subtype_xmlid: "mail.mt_note"
+          }
+        ]
+      },
+      id: Date.now()
+    });
+
+    if (response.data.error) {
+      console.error('Chatter note error:', JSON.stringify(response.data.error));
+      return null;
+    }
+    console.log(`Chatter note posted for partner ${partnerId}: Created by ${staffName}`);
+    return response.data.result;
+  } catch (error) {
+    console.error('Chatter note error:', error.message);
+    return null;
+  }
+}
+
+// Fetch IDF2026 contacts from Odoo
+async function getOdooContacts(limit = 100, offset = 0, branchId = null) {
+  const uid = await authenticateOdoo();
+
+  const domain = [["name", "ilike", "#IDF2026"]];
+  if (branchId) {
+    domain.push(["branch_id", "=", parseInt(branchId)]);
+  }
+
+  const response = await axios.post(`${ODOO_URL}/jsonrpc`, {
+    jsonrpc: "2.0",
+    method: "call",
+    params: {
+      service: "object",
+      method: "execute_kw",
+      args: [ODOO_DB, uid, ODOO_API_KEY, "res.partner", "search_read",
+        [domain],
+        {
+          fields: ["id", "name", "phone", "city", "branch_id", "create_date"],
+          limit: limit,
+          offset: offset,
+          order: "create_date desc"
+        }
+      ]
+    },
+    id: Date.now()
+  });
+
+  return response.data.result || [];
+}
+
+// Count IDF2026 contacts in Odoo
+async function countOdooContacts(branchId = null) {
+  const uid = await authenticateOdoo();
+
+  const domain = [["name", "ilike", "#IDF2026"]];
+  if (branchId) {
+    domain.push(["branch_id", "=", parseInt(branchId)]);
+  }
+
+  const response = await axios.post(`${ODOO_URL}/jsonrpc`, {
+    jsonrpc: "2.0",
+    method: "call",
+    params: {
+      service: "object",
+      method: "execute_kw",
+      args: [ODOO_DB, uid, ODOO_API_KEY, "res.partner", "search_count", [domain]]
+    },
+    id: Date.now()
+  });
+
+  return response.data.result || 0;
+}
+
+// Get staff stats from chatter messages
+async function getStaffStats() {
+  const uid = await authenticateOdoo();
+
+  try {
+    const response = await axios.post(`${ODOO_URL}/jsonrpc`, {
+      jsonrpc: "2.0",
+      method: "call",
+      params: {
+        service: "object",
+        method: "execute_kw",
+        args: [ODOO_DB, uid, ODOO_API_KEY, "mail.message", "search_read",
+          [[
+            ["body", "ilike", "Created by%#IDF2026"],
+            ["model", "=", "res.partner"]
+          ]],
+          { fields: ["body"] }
+        ]
+      },
+      id: Date.now()
+    });
+
+    const messages = response.data.result || [];
+    const staffCounts = {};
+
+    messages.forEach(msg => {
+      const match = msg.body.match(/Created by ([^#]+) #IDF2026/);
+      if (match) {
+        const staffName = match[1].trim();
+        staffCounts[staffName] = (staffCounts[staffName] || 0) + 1;
+      }
+    });
+
+    return Object.entries(staffCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  } catch (error) {
+    console.error('Staff stats error:', error.message);
+    return [];
+  }
+}
+
+// Fetch branches from Odoo
+async function getOdooBranches() {
+  const uid = await authenticateOdoo();
+
+  const response = await axios.post(`${ODOO_URL}/jsonrpc`, {
+    jsonrpc: "2.0",
+    method: "call",
+    params: {
+      service: "object",
+      method: "execute_kw",
+      args: [ODOO_DB, uid, ODOO_API_KEY, "company.branches", "search_read",
+        [[]],  // domain - empty to get all
+        { fields: ["id", "name"] }
+      ]
+    },
+    id: Date.now()
+  });
+
+  if (response.data.error) {
+    console.error('Odoo branches error:', response.data.error);
+    throw new Error(response.data.error.data?.message || 'Failed to fetch branches');
+  }
+  return response.data.result || [];
+}
+
+console.log(`Odoo configured: ${ODOO_DB ? 'Yes' : 'No'} (${ODOO_URL})`)
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
@@ -431,45 +766,36 @@ app.get('/api/coupons', authenticateToken, (req, res) => {
   });
 });
 
-// Get stats
-app.get('/api/stats', authenticateToken, (req, res) => {
-  const { date } = req.query;
-  
-  let dateFilter = '';
-  const params = [];
-  
-  if (date) {
-    dateFilter = 'WHERE DATE(c.created_at) = ?';
-    params.push(date);
+// Get stats from Odoo
+app.get('/api/stats', authenticateToken, async (req, res) => {
+  try {
+    const totalContacts = await countOdooContacts();
+    const activeStaff = db.prepare('SELECT COUNT(*) as count FROM users WHERE active = 1').get().count;
+
+    // Get branch-wise counts
+    const branches = await getOdooBranches();
+    const byBranch = [];
+    for (const branch of branches.slice(0, 5)) {
+      const count = await countOdooContacts(branch.id);
+      if (count > 0) {
+        byBranch.push({ branch: branch.name, count });
+      }
+    }
+    byBranch.sort((a, b) => b.count - a.count);
+
+    // Get staff stats from chatter
+    const byStaff = await getStaffStats();
+
+    res.json({
+      totalContacts,
+      activeStaff,
+      byBranch,
+      byStaff
+    });
+  } catch (error) {
+    console.error('Stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
   }
-
-  const totalCoupons = db.prepare(`SELECT COUNT(*) as count FROM coupons c ${dateFilter}`).get(...params).count;
-  const whatsappSent = db.prepare(`SELECT COUNT(*) as count FROM coupons c ${dateFilter ? dateFilter + ' AND' : 'WHERE'} whatsapp_sent = 1`).get(...params).count;
-
-  const byBranch = db.prepare(`
-    SELECT branch, COUNT(*) as count 
-    FROM coupons c 
-    ${dateFilter}
-    GROUP BY branch 
-    ORDER BY count DESC
-  `).all(...params);
-
-  const byStaff = db.prepare(`
-    SELECT u.name, COUNT(*) as count
-    FROM coupons c
-    JOIN users u ON c.staff_id = u.id
-    ${dateFilter}
-    GROUP BY c.staff_id
-    ORDER BY count DESC
-  `).all(...params);
-
-  res.json({
-    totalCoupons,
-    whatsappSent,
-    whatsappFailed: totalCoupons - whatsappSent,
-    byBranch,
-    byStaff
-  });
 });
 
 // Export to Excel
@@ -557,13 +883,142 @@ app.post('/api/coupons/:id/resend', authenticateToken, async (req, res) => {
   res.json({ success: result.success, error: result.error });
 });
 
-// Get branches list
-app.get('/api/branches', authenticateToken, (req, res) => {
-  // You can make this configurable via database or environment
-  const branches = process.env.BRANCHES 
-    ? process.env.BRANCHES.split(',').map(b => b.trim())
-    : ['Mabelah', 'Ghobra', 'Barka', 'Nizwa', 'Ibri', 'Sohar', 'Sur', 'Salalah'];
-  res.json({ branches });
+// ============== CONTACT ROUTES (ODOO) ==============
+
+// Create contact in Odoo (no local storage)
+app.post('/api/contacts', authenticateToken, async (req, res) => {
+  try {
+    const { name, phone, city, branch_id } = req.body;
+
+    // Validate
+    if (!name?.trim() || !phone?.trim() || !city?.trim()) {
+      return res.status(400).json({ error: 'Name, phone, and city are required' });
+    }
+
+    // Normalize phone (Oman format)
+    const normalizedPhone = normalizeOmanMobile(phone);
+    if (!isValidOmanMobile(normalizedPhone)) {
+      return res.status(400).json({ error: 'Invalid Oman mobile number (8 digits, starts with 7 or 9)' });
+    }
+
+    // 1. Create contact in Odoo
+    const partnerId = await createOdooContact(name.trim(), normalizedPhone, city.trim(), branch_id);
+    const formattedName = `${name.trim().toUpperCase()} ${normalizedPhone} #IDF2026`;
+
+    // 2. Post chatter note with staff name for tracking
+    await postOdooChatterNote(partnerId, req.user.name);
+
+    // 3. Send WhatsApp using template via Odoo
+    let whatsappResult = { success: false };
+    try {
+      whatsappResult = await sendOdooWhatsApp(partnerId, normalizedPhone);
+    } catch (waError) {
+      console.error('WhatsApp error:', waError.message);
+      whatsappResult.error = waError.message;
+    }
+
+    res.json({
+      success: true,
+      contact: {
+        odoo_partner_id: partnerId,
+        name: formattedName,
+        phone: normalizedPhone,
+        city: city.trim()
+      },
+      whatsapp_sent: whatsappResult.success
+    });
+
+  } catch (error) {
+    console.error('Contact creation error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create contact' });
+  }
+});
+
+// Get branches from Odoo
+app.get('/api/branches', authenticateToken, async (req, res) => {
+  try {
+    const branches = await getOdooBranches();
+    res.json({ branches });
+  } catch (error) {
+    console.error('Failed to fetch branches:', error.message);
+    // Fallback to env branches if Odoo fails
+    const fallbackBranches = process.env.BRANCHES
+      ? process.env.BRANCHES.split(',').map((b, i) => ({ id: i + 1, name: b.trim() }))
+      : [];
+    res.json({ branches: fallbackBranches });
+  }
+});
+
+// Get all contacts from Odoo (with pagination)
+app.get('/api/contacts', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 50, branch_id } = req.query;
+    const offset = (page - 1) * limit;
+
+    const contacts = await getOdooContacts(parseInt(limit), offset, branch_id);
+    const total = await countOdooContacts(branch_id);
+
+    res.json({
+      contacts: contacts.map(c => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        city: c.city,
+        branch_id: c.branch_id ? c.branch_id[0] : null,
+        branch_name: c.branch_id ? c.branch_id[1] : null,
+        created_at: c.create_date
+      })),
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Fetch contacts error:', error);
+    res.status(500).json({ error: 'Failed to fetch contacts' });
+  }
+});
+
+// Export contacts to Excel (from Odoo)
+app.get('/api/contacts/export', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { branch_id } = req.query;
+
+    // Fetch all contacts from Odoo (up to 10000)
+    const contacts = await getOdooContacts(10000, 0, branch_id);
+
+    const data = contacts.map(c => ({
+      "Customer Name": c.name,
+      "Phone": c.phone,
+      "City": c.city,
+      "Branch": c.branch_id ? c.branch_id[1] : '',
+      "Date & Time": c.create_date
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Contacts');
+
+    worksheet['!cols'] = [
+      { wch: 30 }, // Customer Name
+      { wch: 12 }, // Phone
+      { wch: 15 }, // City
+      { wch: 15 }, // Branch
+      { wch: 20 }  // Date & Time
+    ];
+
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    const filename = `contacts-export-${new Date().toISOString().split('T')[0]}.xlsx`;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+  } catch (error) {
+    console.error('Export error:', error);
+    res.status(500).json({ error: 'Failed to export contacts' });
+  }
 });
 
 // Health check
